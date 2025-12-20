@@ -1,0 +1,21 @@
+{
+	"name": "mini_app_card_sign",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"packageManager": "pnpm@10.26.1",
+	"dependencies": {
+		"buffer": "^6.0.3",
+		"cors": "^2.8.5",
+		"express": "^5.2.1",
+		"node-napcat-ts": "^0.4.20",
+		"protobufjs": "^8.0.0"
+	},
+	"type": "module"
+}
