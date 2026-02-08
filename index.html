@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>MiniAppArkSigner</title>
+
+		<style>
+			body {
+				font-family: "Segoe UI", Arial, sans-serif;
+				background: linear-gradient(135deg, #667eea, #764ba2);
+				min-height: 100vh;
+				margin: 0;
+				padding: 16px;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
+
+			/* 公告栏 */
+			.notice {
+				width: 100%;
+				max-width: 500px;
+				background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+				color: #333;
+				padding: 10px 14px;
+				border-radius: 10px;
+				font-size: 14px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+				text-align: center;
+				margin-bottom: 12px;
+			}
+
+			.container {
+				width: 100%;
+				max-width: 500px;
+				background: rgba(255, 255, 255, 0.95);
+				padding: 20px;
+				border-radius: 16px;
+				box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+				backdrop-filter: blur(10px);
+				box-sizing: border-box;
+			}
+
+			input,
+			textarea {
+				width: 100%;
+				margin: 6px 0;
+				padding: 12px;
+				font-size: 15px;
+				border-radius: 8px;
+				border: 1px solid #ddd;
+				box-sizing: border-box;
+				transition: 0.2s;
+			}
+
+			input:focus,
+			textarea:focus {
+				outline: none;
+				border-color: #667eea;
+				box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+			}
+
+			button {
+				width: 100%;
+				margin-top: 10px;
+				padding: 12px;
+				font-size: 15px;
+				border: none;
+				border-radius: 10px;
+				cursor: pointer;
+				background: linear-gradient(135deg, #667eea, #764ba2);
+				color: white;
+				font-weight: bold;
+				transition: 0.2s;
+			}
+
+			button:hover {
+				transform: translateY(-1px);
+				box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+			}
+
+			hr {
+				margin: 16px 0;
+				border: none;
+				border-top: 1px solid #eee;
+			}
+
+			/* 弹窗 */
+			.modal {
+				display: none;
+				position: fixed;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 100%;
+				background: rgba(0, 0, 0, 0.4);
+				justify-content: center;
+				align-items: center;
+				backdrop-filter: blur(4px);
+			}
+
+			.modal-content {
+				background: white;
+				padding: 25px;
+				border-radius: 14px;
+				min-width: 320px;
+				max-width: 90%;
+				text-align: center;
+				box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+				animation: pop 0.25s ease;
+			}
+
+			@keyframes pop {
+				from {
+					transform: scale(0.9);
+					opacity: 0;
+				}
+				to {
+					transform: scale(1);
+					opacity: 1;
+				}
+			}
+
+			pre {
+				background: #f6f6f6;
+				padding: 10px;
+				border-radius: 8px;
+				text-align: left;
+				overflow: auto;
+				max-height: 240px;
+			}
+
+			/* 加载动画 */
+			.spinner {
+				width: 40px;
+				height: 40px;
+				border: 4px solid #eee;
+				border-top: 4px solid #667eea;
+				border-radius: 50%;
+				margin: 15px auto;
+				animation: spin 1s linear infinite;
+			}
+
+			@keyframes spin {
+				to {
+					transform: rotate(360deg);
+				}
+			}
+
+			/* 页脚 */
+			.footer {
+				width: 100%;
+				max-width: 500px;
+				margin-top: 14px;
+				text-align: center;
+				font-size: 13px;
+				color: rgba(255, 255, 255, 0.8);
+			}
+
+			.footer a {
+				color: #fff;
+				text-decoration: underline;
+			}
+
+			@media (max-width: 400px) {
+				body {
+					padding: 10px;
+				}
+
+				.container {
+					padding: 16px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<script src="src/index.js" type="module"></script>
+
+		<!-- 公告 -->
+		<div class="notice">
+			公告：本工具仅供学习与测试使用，请勿用于违规用途。
+		</div>
+
+		<div class="container">
+			<input id="wsUrl" placeholder="WebSocket 地址" />
+			<input id="token" placeholder="Token" />
+
+			<button onclick="connectWS()">连接</button>
+
+			<hr />
+
+			<input id="appid" value="1109937557" placeholder="AppID" />
+			<input id="title" placeholder="标题" />
+			<input id="desc" placeholder="描述" />
+			<input id="path" placeholder="路径" />
+			<input id="templateId" placeholder="Template ID" />
+			<textarea
+				id="templateData"
+				placeholder="Template Data (JSON)"
+			></textarea>
+
+			<button onclick="signData()">生成签名</button>
+		</div>
+
+		<!-- 页脚 -->
+		<div class="footer">
+			MiniAppArkSigner © 2026<br />
+			Powered by Nacho ·
+			<a href="https://github.com/KyuharuTE/mini_app_card_sign">GitHub</a>
+		</div>
+
+		<!-- 弹窗 -->
+		<div id="modal" class="modal">
+			<div class="modal-content">
+				<h3 id="modalTitle">提示</h3>
+				<div
+					id="modalSpinner"
+					class="spinner"
+					style="display: none"
+				></div>
+				<pre id="modalText"></pre>
+				<button onclick="copyModalText()">复制</button>
+				<button id="modalClose" onclick="closeModal()">关闭</button>
+			</div>
+		</div>
+	</body>
+</html>

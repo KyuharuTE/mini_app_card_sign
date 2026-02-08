@@ -1,5 +1,4 @@
 import protobuf from "protobufjs/minimal.js";
-import { Buffer } from "buffer";
 
 const { Writer, Reader } = protobuf;
 
@@ -32,7 +31,7 @@ class Protobuf {
 				writer.uint32((tag << 3) | 0).bool(value);
 				break;
 			case "object":
-				if (Buffer.isBuffer(value) || value instanceof Uint8Array) {
+				if (value instanceof Uint8Array) {
 					writer.uint32((tag << 3) | 2).bytes(value);
 				} else if (Array.isArray(value)) {
 					value.forEach((item) => this._encode(writer, tag, item));
@@ -49,14 +48,20 @@ class Protobuf {
 	}
 
 	decode(buffer) {
-		if (typeof buffer === "string") buffer = Buffer.from(buffer, "hex");
+		if (typeof buffer === "string") {
+			buffer = this.hexToBytes(buffer);
+		}
+
 		const result = {};
 		const reader = Reader.create(buffer);
+
 		while (reader.pos < reader.len) {
 			const k = reader.uint32();
 			const tag = k >> 3,
 				type = k & 0b111;
+
 			let value;
+
 			switch (type) {
 				case 0:
 					value = this.long2int(reader.int64());
@@ -65,18 +70,18 @@ class Protobuf {
 					value = this.long2int(reader.fixed64());
 					break;
 				case 2:
-					value = Buffer.from(reader.bytes());
+					value = reader.bytes();
 					try {
 						value = this.decode(value);
 					} catch {
 						try {
-							const decoded = value.toString("utf-8");
-							const reEncoded = Buffer.from(decoded, "utf-8");
-							if (reEncoded.every((v, i) => v === value[i])) {
+							const decoded = new TextDecoder().decode(value);
+							const reEncoded = new TextEncoder().encode(decoded);
+							if (reEncoded.length === value.length) {
 								value = decoded;
 							}
 						} catch {
-							// do nothing
+							// ignore
 						}
 					}
 					break;
@@ -89,9 +94,8 @@ class Protobuf {
 
 			if (Array.isArray(result[tag])) {
 				result[tag].push(value);
-			} else if (!!result[tag]) {
-				result[tag] = [result[tag]];
-				result[tag].push(value);
+			} else if (result[tag] !== undefined) {
+				result[tag] = [result[tag], value];
 			} else {
 				result[tag] = value;
 			}
@@ -99,12 +103,52 @@ class Protobuf {
 		return result;
 	}
 
+	hexToBytes(hex) {
+		const bytes = new Uint8Array(hex.length / 2);
+		for (let i = 0; i < bytes.length; i++) {
+			bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+		}
+		return bytes;
+	}
+
 	long2int(long) {
-		if (long.high === 0) return long.low >>> 0;
-		const bigint =
-			(BigInt(long.high) << 32n) | (BigInt(long.low) & 0xffffffffn);
-		const int = Number(bigint);
-		return Number.isSafeInteger(int) ? int : bigint;
+		if (long == null) return 0;
+
+		// 如果已经是 number
+		if (typeof long === "number") {
+			return long;
+		}
+
+		// 如果是 bigint
+		if (typeof long === "bigint") {
+			const num = Number(long);
+			return Number.isSafeInteger(num) ? num : long;
+		}
+
+		// 如果是字符串
+		if (typeof long === "string") {
+			const bigint = BigInt(long);
+			const num = Number(bigint);
+			return Number.isSafeInteger(num) ? num : bigint;
+		}
+
+		// 如果是 protobuf long 对象
+		if (
+			typeof long === "object" &&
+			long.low !== undefined &&
+			long.high !== undefined
+		) {
+			if (long.high === 0) return long.low >>> 0;
+
+			const bigint =
+				(BigInt(long.high) << 32n) | (BigInt(long.low) & 0xffffffffn);
+
+			const num = Number(bigint);
+			return Number.isSafeInteger(num) ? num : bigint;
+		}
+
+		// fallback
+		return 0;
 	}
 }
 

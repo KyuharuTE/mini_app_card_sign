@@ -1,21 +1,18 @@
 {
-	"name": "mini_app_card_sign",
-	"version": "1.0.0",
-	"description": "",
-	"main": "index.js",
-	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
-	},
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
-	"packageManager": "pnpm@10.26.1",
-	"dependencies": {
-		"buffer": "^6.0.3",
-		"cors": "^2.8.5",
-		"express": "^5.2.1",
-		"node-napcat-ts": "^0.4.20",
-		"protobufjs": "^8.0.0"
-	},
-	"type": "module"
+  "name": "miniapparksigner",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^7.2.4"
+  },
+  "dependencies": {
+    "node-napcat-ts": "^0.4.21",
+    "protobufjs": "^8.0.0"
+  }
 }
